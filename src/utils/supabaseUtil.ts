@@ -176,27 +176,6 @@ async function deleteJournalEntryById(id: number): Promise<boolean> {
 	return true;
 }
 
-async function createVerificationCode(authUserId: string): Promise<string> {
-	// Generate a 6-digit random verification code
-	const code = Math.floor(100000 + Math.random() * 900000).toString();
-
-	// Insert the code into the verification_codes table
-	const { data, error } = await supabaseClient.from('verification_codes').insert([
-		{
-			user_id: authUserId,
-			code,
-			expires_at: new Date(Date.now() + 15 * 60 * 1000), // Code expires in 15 minutes
-		},
-	]);
-
-	if (error) {
-		throw new Error(`Error creating verification code: ${error.message}`);
-	}
-
-	// Return the generated code
-	return code;
-}
-
 async function createUser(email: string, password: string): Promise<AuthData> {
 	const { data, error } = await supabaseClient.auth.signUp({
         email,
@@ -206,6 +185,8 @@ async function createUser(email: string, password: string): Promise<AuthData> {
 	if (!data.user) {
 		throw new Error('Failed to create user: No user returned from Supabase');
 	}
+
+	console.log(data);
 
 	if (!data.session) {
 		throw new Error('Failed to create user: No session returned from Supabase');
@@ -232,31 +213,22 @@ async function getAuthIdByEmail(email: string): Promise<string| null> {
 		throw new Error(`Error fetching auth ID by email (${email}): ${error.message}`);
 	}
 	
-
-	
-
 	return data?.id || null;
-
 }
 
-async function getVerificationByAuthId(authId: string | null): Promise<string| null> {
-	const {data, error} = await supabaseClient
-        .from('verification_codes')
-        .select('code')
-        .eq('user_id', authId)
-        .single();
+async function verifyOtp(email: string, otpCode: string): Promise<boolean> {
+    const { data, error } = await supabaseClient.auth.verifyOtp({
+        email,
+        token: otpCode,
+        type: 'signup', // Ensure correct type
+    });
 
-	if (!authId) {
-		throw new Error("Can't pass in null value for authId")
-	}
-    
     if (error) {
-        throw new Error(`Error fetching verification code by auth ID (${authId}): ${error.message}`);
+        throw new Error(`Error verifying OTP: ${error.message}`);
     }
 
-    return data?.code || null;
+    return true;
 }
-
 
 const db = {
 	getAllProfiles,
@@ -271,10 +243,9 @@ const db = {
 	getJournalEntriesByUserId,
 	addJournalEntry,
 	deleteJournalEntryById,
-	createVerificationCode,
 	createUser,
 	getAuthIdByEmail,
-	getVerificationByAuthId,
+	verifyOtp,
 };
 
 export default db;
