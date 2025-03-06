@@ -10,7 +10,7 @@ async function getAllProfiles(): Promise<Profile[]> {
 		.select('*');
 
 	if (error) {
-		throw new Error(`Error fetching profiles: ${error.message}`);
+		throw error;
 	}
 
 	return data!;
@@ -24,13 +24,13 @@ async function getProfileById(id: number): Promise<Profile | null> {
 		.single();
 
 	if (error) {
-		throw new Error(`Error fetching profile by ID (${id}): ${error.message}`);
+		throw error;
 	}
 
 	return data;
 }
 
-async function addProfile(firstname: string, email: string, occupation: string, goalId: number, emailFrequnecyId: number, authUserId: string): Promise<Profile | null> {
+async function addProfile(firstname: string, email: string, occupation: string, goalId: number, emailFrequnecyId: number): Promise<Profile | null> {
 	const { data, error } = await supabaseClient
 		.from('profiles')
 		.insert([
@@ -45,7 +45,7 @@ async function addProfile(firstname: string, email: string, occupation: string, 
 		.single();
 
 	if (error) {
-		throw new Error(`Error adding profile: ${error.message}`);
+		throw error;
 	}
 
 	return data;
@@ -58,9 +58,8 @@ async function deleteProfileById(id: number): Promise<void> {
 		.eq('id', id);
 
 	if (error) {
-		throw new Error(`Error deleting profile by ID (${id}): ${error.message}`);
+		throw error;
 	}
-
 }
 
 // Goals (Static Data)
@@ -70,7 +69,7 @@ async function getAllGoals(): Promise<Goal[]> {
 		.select('*');
 
 	if (error) {
-		throw new Error(`Error fetching goals: ${error.message}`);
+		throw error;
 	}
 
 	return data!;
@@ -84,7 +83,7 @@ async function getGoalById(id: number): Promise<Goal | null> {
 		.single();
 
 	if (error) {
-		throw new Error(`Error fetching goal by ID (${id}): ${error.message}`);
+		throw error;
 	}
 
 	return data;
@@ -98,7 +97,7 @@ async function getGoalByHeading(heading: string): Promise<Goal | null> {
 		.single();
 
 	if (error) {
-		throw new Error(`Error fetching goal by heading (${heading}): ${error.message}`);
+		throw error;
 	}
 
 	return data;
@@ -111,7 +110,7 @@ async function getAllEmailFrequencies(): Promise<EmailFrequency[]> {
 		.select('*');
 
 	if (error) {
-		throw new Error(`Error fetching message frequencies: ${error.message}`);
+		throw error;
 	}
 
 	return data!;
@@ -125,7 +124,7 @@ async function getEmailFrequencyById(id: number): Promise<EmailFrequency | null>
 		.single();
 
 	if (error) {
-		throw new Error(`Error fetching message frequency by ID (${id}): ${error.message}`);
+		throw error;
 	}
 
 	return data;
@@ -139,7 +138,7 @@ async function getJournalEntriesByUserId(userId: number): Promise<JournalEntry[]
 		.eq('user_id', userId);
 
 	if (error) {
-		throw new Error(`Error fetching journal entries for user ID (${userId}): ${error.message}`);
+		throw error;
 	}
 
 	return data!;
@@ -157,7 +156,7 @@ async function addJournalEntry(userId: number, content: string): Promise<Journal
 		.single();
 
 	if (error) {
-		throw new Error(`Error adding journal entry for user ID (${userId}): ${error.message}`);
+		throw error;
 	}
 
 	return data;
@@ -170,7 +169,7 @@ async function deleteJournalEntryById(id: number): Promise<boolean> {
 		.eq('id', id);
 
 	if (error) {
-		throw new Error(`Error deleting journal entry by ID (${id}): ${error.message}`);
+		throw error;
 	}
 
 	return true;
@@ -181,24 +180,24 @@ async function createUser(email: string, password: string): Promise<AuthData> {
         email,
         password,
     });
-	
-	if (!data.user) {
-		throw new Error('Failed to create user: No user returned from Supabase');
-	}
 
-	console.log(data);
+	console.log(data)
 
-	if (!data.session) {
-		throw new Error('Failed to create user: No session returned from Supabase');
-	}
-
-    if (error) {
-        throw new Error(`Error creating user: ${error.message}`);
+	if (error) {
+        throw error;
     }
 
+	// if (!data.user || !data.session) {
+	// 	throw new Error('Failed to create user: Missing user or session data');
+	// }
+
+	if (!data.user) {
+		throw new Error('Failed to create user: Missing user data');
+	}
+	
     return {
 		user: data.user,
-		session: data.session,
+		// session: data.session,
 	};
 }
 
@@ -210,7 +209,7 @@ async function getAuthIdByEmail(email: string): Promise<string| null> {
 		.single();
 	
 	if (error) {
-		throw new Error(`Error fetching auth ID by email (${email}): ${error.message}`);
+		throw error;
 	}
 	
 	return data?.id || null;
@@ -220,11 +219,11 @@ async function verifyOtp(email: string, otpCode: string): Promise<boolean> {
     const { data, error } = await supabaseClient.auth.verifyOtp({
         email,
         token: otpCode,
-        type: 'signup', // Ensure correct type
+        type: 'signup',
     });
 
     if (error) {
-        throw new Error(`Error verifying OTP: ${error.message}`);
+        throw error;
     }
 
     return true;
