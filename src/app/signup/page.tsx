@@ -68,6 +68,53 @@ export default function FullPageForm() {
     const handleNext = () => setStep(prev => Math.min(prev + 1, 4));
     const handlePrev = () => setStep(prev => Math.max(prev - 1, 1));
 
+    const handleNextStep = async () => {
+        if (step === 1) {
+            setLoading(true);
+            try {
+                console.log(formData);
+                const response = await fetch("/api/signup", {
+                    method: "POST",
+                    body: JSON.stringify({ 
+                        email: formData.email, 
+                        password: formData.password 
+                    }),
+                    headers: { "Content-Type": "application/json" },
+                });
+    
+                if (!response.ok) throw new Error("Signup failed");
+    
+                handleNext(); // Move to next step only if signup is successful
+            } catch (error) {
+                console.error("Signup failed:", error);
+                alert("Signup failed. Please try again.");
+            } finally {
+                setLoading(false);
+            }
+        } else if (step === 2) {
+            setLoading(true);
+            try {
+                const response = await fetch("/api/verifyOtp", {
+                    method: "POST",
+                    body: JSON.stringify({ email: formData.email, otp: formData.confirmationCode }),
+                    headers: { "Content-Type": "application/json" },
+                });
+    
+                if (!response.ok) throw new Error("OTP verification failed");
+    
+                handleNext(); // Move to next step only if OTP is verified
+            } catch (error) {
+                console.error("OTP verification failed:", error);
+                alert("Invalid OTP. Please try again.");
+            } finally {
+                setLoading(false);
+            }
+        } else {
+            handleNext();
+        }
+    };
+    
+
     const handleSubmit = (e: any) => {
         e.preventDefault();
         
@@ -155,7 +202,11 @@ export default function FullPageForm() {
                         {step === 2 && (
                             <div>
                                 <Label htmlFor="confirmationCode" className="text-black">Confirmation Code</Label>
-                                <InputOTP maxLength={6} className="mt-1">
+                                <InputOTP maxLength={6} 
+                                className="mt-1"
+                                value={formData.confirmationCode} 
+                                onChange={(value) => setFormData(prev => ({ ...prev, confirmationCode: value }))}
+                                >
                                     <InputOTPGroup>
                                         <InputOTPSlot index={0} />
                                         <InputOTPSlot index={1} />
@@ -215,26 +266,12 @@ export default function FullPageForm() {
                                 </Button>
                             )}
                             {step < 4 ? (
-                                <Button type="button" onClick={handleNext} className="p-4 text-jewelBlack">
+                                <Button type="button" onClick={handleNextStep} className="p-4 text-jewelBlack">
                                     Continue
                                 </Button>
                             ) : (
                                 <Button type="submit" className="p-4 text-jewelBlack" onClick={async () => {
-                                    console.log(formData);
-                                    setLoading(true)
-                                    fetch("/api/signup", {
-                                        method: "POST",
-                                        body: JSON.stringify(formData),
-                                        headers: {
-                                            "Content-Type": "application/json",
-                                        },
-                                    }).then((data) => {
-                                        setLoading(false);
-                                    })
-                                    console.log(formData.emailFrequency);
-                                
-                                    await router.push('/journal')
-
+                                    handleNextStep()
                                 }}>
                                     Submit
                                 </Button>

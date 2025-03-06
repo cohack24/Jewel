@@ -9,13 +9,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (req.method === 'POST') {
 
         try {
-            const { email, otpCode } = req.body;
+            const { email, otp } = req.body;
             
-            if (!email || !otpCode) {
+            
+            if (!email || !otp) {
                 return res.status(400).json({ message: 'Email and OTP code are required' });
             }
 
-            db.verifyOtp(email, otpCode);
+            db.verifyOtp(email, otp);
 
             res.status(200).json({ message: 'OTP verified successfully' });
         }

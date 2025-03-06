@@ -17,14 +17,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const { email, password } = req.body;
             
             const authUser: AuthData = await db.createUser(email, password);
-            const verificationCode: string = await db.createVerificationCode(authUser.user.id);
+            // const verificationCode: string = await db.createVerificationCode(authUser.user.id);
 
-            await resend.emails.send({
-                from: "onboarding@resend.dev",
-                to: email,
-                subject: "Resend Verification Code",
-                text: verificationCode
-            });            
+            // await resend.emails.send({
+            //     from: "onboarding@resend.dev",
+            //     to: email,
+            //     subject: "Resend Verification Code",
+            //     text: verificationCode
+            // });            
 
             res.status(200).json({
 				success: true,

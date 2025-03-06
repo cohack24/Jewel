@@ -32,7 +32,7 @@ interface JournalEntry {
 
 interface AuthData {
     user: User;
-    session: Session;
+    // session: Session;
 }
 
 export type { Profile, Goal, EmailFrequency, JournalEntry, AuthData };
