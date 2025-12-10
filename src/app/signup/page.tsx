@@ -48,31 +48,71 @@ const StepImage = ({ step } : {step: number}) => {
 export default function FullPageForm() {
     const router = useRouter();
     const [step, setStep] = useState(1);
-    const [formData, setFormData] = useState({
-        firstName: '',
-        email: '',
-        occupation: '',
-        goal: '',
-        confirmationCode: '',
-        emailFrequency: '',
-        password: ''
-    });
+    const [firstName, setFirstName] = useState('');
+    const [email, setEmail] = useState('');
+    const [occupation, setOccupation] = useState('');
+    const [goal, setGoal] = useState('');
+    const [confirmationCode, setConfirmationCode] = useState('');
+    const [emailFrequency, setEmailFrequency] = useState('');
+    const [password, setPassword] = useState('');
+
+    const handleFirstNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFirstName(e.target.value);
+    };
+    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setEmail(e.target.value);
+    };
+    const handleOccupationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setOccupation(e.target.value);
+    };
+    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setPassword(e.target.value);
+    };
+    const handleGoalChange = (value: string) => {
+        setGoal(value);
+    };
+    const handleConfirmationCodeChange = (value: string) => {
+        console.log(value)
+        setConfirmationCode(value);
+    };
+    const handleEmailFrequencyChange = (value: string) => {
+        setEmailFrequency(value);
+    };
 
     const [loading, setLoading] = useState(false);
 
-    const handleInputChange = (e: any) => {
-        const {name, value} = e.target;
-        setFormData(prev => ({...prev, [name]: value}));
-    };
+    
 
     const handleNext = () => setStep(prev => Math.min(prev + 1, 4));
     const handlePrev = () => setStep(prev => Math.max(prev - 1, 1));
 
-    const handleSubmit = (e: any) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
 
-        console.log('Form submitted:', formData);
+        setLoading(true);
+        try {
+            const payload = {
+                firstName,
+                email,
+                occupation,
+                goal,
+                confirmationCode,
+                emailFrequency,
+                password,
+            };
+
+            await fetch("/api/signup", {
+                method: "POST",
+                body: JSON.stringify(payload),
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            await router.push('/journal');
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (loading) {
@@ -107,8 +147,8 @@ export default function FullPageForm() {
                                     <Input
                                         id="firstName"
                                         name="firstName"
-                                        value={formData.firstName}
-                                        onChange={handleInputChange}
+                                        value={firstName}
+                                        onChange={handleFirstNameChange}
                                         required
                                         className="mt-1 bg-gray-100 text-black border border-gray-300"
                                     />
@@ -119,8 +159,8 @@ export default function FullPageForm() {
                                         id="email"
                                         name="email"
                                         type="email"
-                                        value={formData.email}
-                                        onChange={handleInputChange}
+                                        value={email}
+                                        onChange={handleEmailChange}
                                         required
                                         className="mt-1 bg-gray-100 text-black border border-gray-300"
                                     />
@@ -132,8 +172,8 @@ export default function FullPageForm() {
                                         id="password"
                                         name="password"
                                         type="password"
-                                        value={formData.password}
-                                        onChange={handleInputChange}
+                                        value={password}
+                                        onChange={handlePasswordChange}
                                         required
                                         className="mt-1 bg-gray-100 text-black border border-gray-300"
                                     />
@@ -143,8 +183,8 @@ export default function FullPageForm() {
                                     <Input
                                         id="occupation"
                                         name="occupation"
-                                        value={formData.occupation}
-                                        onChange={handleInputChange}
+                                        value={occupation}
+                                        onChange={handleOccupationChange}
                                         required
                                         className="mt-1 bg-gray-100 text-black border border-gray-300"
                                     />
@@ -155,7 +195,12 @@ export default function FullPageForm() {
                         {step === 2 && (
                             <div>
                                 <Label htmlFor="confirmationCode" className="text-black">Confirmation Code</Label>
-                                <InputOTP maxLength={6} className="mt-1">
+                                <InputOTP
+                                    value={confirmationCode}
+                                    onChange={handleConfirmationCodeChange}
+                                    maxLength={6}
+                                    className="mt-1"
+                                >
                                     <InputOTPGroup>
                                         <InputOTPSlot index={0} />
                                         <InputOTPSlot index={1} />
@@ -172,7 +217,7 @@ export default function FullPageForm() {
                         )}
 
                         {step === 3 && (
-                            <RadioGroup defaultValue="comfortable" onValueChange={(value) => setFormData(prev => ({ ...prev, goal: value }))}>
+                            <RadioGroup value={goal} onValueChange={handleGoalChange}>
                                 <div className="space-y-2">
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="1" id="r1" className="border-jewelBlack"/>
@@ -191,7 +236,7 @@ export default function FullPageForm() {
                         )}
 
                         {step === 4 && (
-                            <RadioGroup defaultValue="comfortable" onValueChange={(value) => setFormData(prev => ({ ...prev, emailFrequency: value }))}>
+                            <RadioGroup value={emailFrequency} onValueChange={handleEmailFrequencyChange}>
                                 <div className="space-y-2">
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="1" id="r1" className="border-jewelBlack"/>
@@ -219,23 +264,7 @@ export default function FullPageForm() {
                                     Continue
                                 </Button>
                             ) : (
-                                <Button type="submit" className="p-4 text-jewelBlack" onClick={async () => {
-                                    console.log(formData);
-                                    setLoading(true)
-                                    fetch("/api/signup", {
-                                        method: "POST",
-                                        body: JSON.stringify(formData),
-                                        headers: {
-                                            "Content-Type": "application/json",
-                                        },
-                                    }).then((data) => {
-                                        setLoading(false);
-                                    })
-                                    console.log(formData.emailFrequency);
-                                
-                                    await router.push('/journal')
-
-                                }}>
+                                <Button type="submit" className="p-4 text-jewelBlack">
                                     Submit
                                 </Button>
                             )}
