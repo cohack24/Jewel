@@ -13,24 +13,25 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import Image from "next/image";
 import { useRouter } from 'next/navigation';
-import {OrbitProgress} from 'react-loading-indicators'
+import { OrbitProgress } from 'react-loading-indicators'
+import { createClient } from '@/lib/supabase/client';
 
-const StepImage = ({ step } : {step: number}) => {
+const StepImage = ({ step }: { step: number }) => {
     const svgContent = {
         1: (
             <svg width="100%" height="100%" viewBox="0 0 720 1024" preserveAspectRatio="xMidYMid slice" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g clipPath="url(#clip0_23_1215)">
-                    <rect width="720" height="1024" fill="#191A23"/>
-                    <circle cx="-8.08493" cy="1047.42" r="410.415" fill="#283314"/>
-                    <circle cx="-8.08536" cy="1047.42" r="324.251" fill="#191A23"/>
-                    <circle cx="-8.08475" cy="1047.42" r="248.29" fill="#283314"/>
+                    <rect width="720" height="1024" fill="#191A23" />
+                    <circle cx="-8.08493" cy="1047.42" r="410.415" fill="#283314" />
+                    <circle cx="-8.08536" cy="1047.42" r="324.251" fill="#191A23" />
+                    <circle cx="-8.08475" cy="1047.42" r="248.29" fill="#283314" />
                     <path
                         d="M407.367 72.1065C337.527 78.6991 290.022 26.7824 275 0L720 1.80266V371.606H670.298C516.402 352.034 542.309 274.005 574.499 237.436C593.299 211.77 627.292 149.93 612.87 107.902C594.844 55.3675 494.667 63.8657 407.367 72.1065Z"
-                        fill="#283314"/>
+                        fill="#283314" />
                 </g>
                 <defs>
                     <clipPath id="clip0_23_1215">
-                        <rect width="720" height="1024" fill="white"/>
+                        <rect width="720" height="1024" fill="white" />
                     </clipPath>
                 </defs>
             </svg>
@@ -54,7 +55,9 @@ export default function FullPageForm() {
     const [goal, setGoal] = useState('');
     const [confirmationCode, setConfirmationCode] = useState('');
     const [emailFrequency, setEmailFrequency] = useState('');
-    const [password, setPassword] = useState('');
+
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const supabase = createClient();
 
     const handleFirstNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFirstName(e.target.value);
@@ -65,14 +68,15 @@ export default function FullPageForm() {
     const handleOccupationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setOccupation(e.target.value);
     };
-    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setPassword(e.target.value);
-    };
+
     const handleGoalChange = (value: string) => {
         setGoal(value);
     };
     const handleConfirmationCodeChange = (value: string) => {
-        console.log(value)
+        if (value.length === 6) {
+            verifyOtp(email, value);
+        }
+
         setConfirmationCode(value);
     };
     const handleEmailFrequencyChange = (value: string) => {
@@ -81,7 +85,7 @@ export default function FullPageForm() {
 
     const [loading, setLoading] = useState(false);
 
-    
+
 
     const handleNext = () => setStep(prev => Math.min(prev + 1, 4));
     const handlePrev = () => setStep(prev => Math.max(prev - 1, 1));
@@ -98,7 +102,6 @@ export default function FullPageForm() {
                 goal,
                 confirmationCode,
                 emailFrequency,
-                password,
             };
 
             await fetch("/api/signup", {
@@ -118,10 +121,33 @@ export default function FullPageForm() {
     if (loading) {
         return (
             <div className="flex justify-center items-center h-screen">
-           <OrbitProgress color="#32cd32" size="medium" text="" textColor="" />           
+                <OrbitProgress color="#32cd32" size="medium" text="" textColor="" />
             </div>
         );
     }
+
+
+
+    const verifyOtp = async (email, code) => {
+        const { data, error } = await supabase.auth.verifyOtp({
+            email,
+            token: code,
+            type: 'email'
+
+        });
+        if (error) {
+            return { ok: false, error };
+        }
+
+        setIsAuthenticated(true);
+        return { ok: true, user: data.user, session: data.session }
+    };
+
+
+
+
+
+    
 
     return (
         <div className="min-h-screen bg-white text-black flex flex-col md:flex-row">
@@ -166,18 +192,7 @@ export default function FullPageForm() {
                                     />
                                 </div>
 
-                                <div>
-                                    <Label htmlFor="password" className="text-black">Password</Label>
-                                    <Input
-                                        id="password"
-                                        name="password"
-                                        type="password"
-                                        value={password}
-                                        onChange={handlePasswordChange}
-                                        required
-                                        className="mt-1 bg-gray-100 text-black border border-gray-300"
-                                    />
-                                </div>
+
                                 <div>
                                     <Label htmlFor="occupation" className="text-black">Occupation</Label>
                                     <Input
@@ -220,15 +235,15 @@ export default function FullPageForm() {
                             <RadioGroup value={goal} onValueChange={handleGoalChange}>
                                 <div className="space-y-2">
                                     <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="1" id="r1" className="border-jewelBlack"/>
+                                        <RadioGroupItem value="1" id="r1" className="border-jewelBlack" />
                                         <Label htmlFor="r1">Improve my daily productivity</Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="2" id="r2" className="border-jewelBlack"/>
+                                        <RadioGroupItem value="2" id="r2" className="border-jewelBlack" />
                                         <Label htmlFor="r2">Monitor my work progress & identify areas of improvement</Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="3" id="r3" className="border-jewelBlack"/>
+                                        <RadioGroupItem value="3" id="r3" className="border-jewelBlack" />
                                         <Label htmlFor="r3">Cultivate mindfulness and improve interpersonal interactions</Label>
                                     </div>
                                 </div>
@@ -239,15 +254,15 @@ export default function FullPageForm() {
                             <RadioGroup value={emailFrequency} onValueChange={handleEmailFrequencyChange}>
                                 <div className="space-y-2">
                                     <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="1" id="r1" className="border-jewelBlack"/>
+                                        <RadioGroupItem value="1" id="r1" className="border-jewelBlack" />
                                         <Label htmlFor="r1">Weekly</Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="2" id="r2" className="border-jewelBlack"/>
+                                        <RadioGroupItem value="2" id="r2" className="border-jewelBlack" />
                                         <Label htmlFor="r2">Bi-weekly</Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="3" id="r3" className="border-jewelBlack"/>
+                                        <RadioGroupItem value="3" id="r3" className="border-jewelBlack" />
                                         <Label htmlFor="r3">Monthly</Label>
                                     </div>
                                 </div>
@@ -259,15 +274,44 @@ export default function FullPageForm() {
                                     Previous
                                 </Button>
                             )}
-                            {step < 4 ? (
+
+                            {step === 1 && (
+                                <Button type="button" onClick={() => {
+                                    supabase.auth.signInWithOtp({
+                                        email, options: {
+                                            shouldCreateUser: true
+                                        }
+                                    })
+                                    handleNext()
+                                }} className="p-4 text-jewelBlack">
+                                    Continue
+                                </Button>
+                            )}
+
+                            {step === 2 && (
+                                <Button disabled={!isAuthenticated} type="button" onClick={() => {
+                                    
+                                    handleNext()
+                                }} className="p-4 text-jewelBlack">
+                                    Continue
+                                </Button>
+                            )}
+
+
+
+                            {step === 3 && (
                                 <Button type="button" onClick={handleNext} className="p-4 text-jewelBlack">
                                     Continue
                                 </Button>
-                            ) : (
+                            )}
+
+                            {step === 4 && (
                                 <Button type="submit" className="p-4 text-jewelBlack">
                                     Submit
                                 </Button>
                             )}
+
+
                         </div>
                     </form>
                 </div>
