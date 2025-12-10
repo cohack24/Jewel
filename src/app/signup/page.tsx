@@ -100,7 +100,6 @@ export default function FullPageForm() {
                 email,
                 occupation,
                 goal,
-                confirmationCode,
                 emailFrequency,
             };
 
