@@ -16,9 +16,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Fetch the user from the 'profiles' table using the email
+    // Fetch the user from the 'users' table using the email
     const { data: profile, error: profileError } = await supabase
-      .from('profiles')
+      .from('users')
       .select('goal_id')
       .eq('email', email)
       .single();

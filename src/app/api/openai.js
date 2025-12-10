@@ -15,8 +15,8 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
  */
 const fetchUserProfile = async (email) => {
   const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('id, firstname, goal_id, email_frequency_id')
+    .from('users')
+    .select('id, first_name, goal_id, email_frequency_id')
     .eq('email', email)
     .single();
 
@@ -42,7 +42,7 @@ const fetchGoal = async (goal_id) => {
 const fetchEmailFrequency = async (email_frequency_id) => {
   const { data: emailFrequency, error } = await supabase
     .from('email_frequencies')
-    .select('time_interval')
+    .select('time_interval_label')
     .eq('id', email_frequency_id)
     .single();
 
@@ -111,15 +111,15 @@ export default async function handler(req, res) {
     userMessage += `${index + 1}. Entry: ${entry.content}\n\n`;
   });
 
-  const { startDate, endDate } = calculateDateRange(emailFrequency.time_interval)
+  const { startDate, endDate } = calculateDateRange(emailFrequency.time_interval_label);
   // Define the system message
   const systemMessage = `
   You are an AI assistant tasked with summarizing a user's journal entries for their progress report. 
-  The user has chosen a ${emailFrequency.time_interval} summary format, focusing on the goal: '${goal.heading}'.
+  The user has chosen a ${emailFrequency.time_interval_label} summary format, focusing on the goal: '${goal.heading}'.
   Generate a structured summary in JSON format with the following properties:
 
   {
-    "firstName": "${profile.firstname}",
+    "firstName": "${profile.first_name}",
     "startDate": "${startDate}",
     "endDate": "${endDate}",
     "selectedGoal": ${goal.heading},

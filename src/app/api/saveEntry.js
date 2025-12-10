@@ -11,7 +11,7 @@ export default async function handler(req, res) {
 
     // Fetch the user's ID based on the email
     const { data: user, error: userError } = await supabase
-      .from('profiles')
+      .from('users')
       .select('id')
       .eq('email', email)
       .single();

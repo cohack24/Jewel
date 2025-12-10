@@ -1,15 +1,17 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseClient: SupabaseClient = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+const supabaseClient: SupabaseClient = createClient(
+	process.env.SUPABASE_URL,
+	process.env.SUPABASE_KEY,
+);
 
 interface Profile {
-	id: number;
-	firstname: string;
-	email: string;
-	occupation: string;
+	id: string; // uuid, references auth.users.id
+	first_name: string | null;
+	email: string | null;
 	created_at: string;
-	goals: number; // Foreign key to goals table
-	email_frequencies: number; // Foreign key to email_frequencies table
+	goal_id: number | null; // Foreign key to goals table
+	email_frequency_id: number | null; // Foreign key to email_frequencies table
 }
 
 interface Goal {
@@ -21,21 +23,22 @@ interface Goal {
 
 interface EmailFrequency {
 	id: number;
-	time_interval: string;
+	time_interval_label: string | null;
+	interval_seconds: number | null;
 	created_at: string;
 }
 
 interface JournalEntry {
 	id: number;
-	user_id: number;
+	user_id: string; // uuid, references public.users.id
 	content: string;
 	created_at: string;
 }
 
-// Profiles
+// Users (previously named "profiles" in the code)
 async function getAllProfiles(): Promise<Profile[]> {
 	const { data, error } = await supabaseClient
-		.from('profiles')
+		.from('users')
 		.select('*');
 
 	if (error) {
@@ -47,7 +50,7 @@ async function getAllProfiles(): Promise<Profile[]> {
 
 async function getProfileById(id: number): Promise<Profile | null> {
 	const { data, error } = await supabaseClient
-		.from('profiles')
+		.from('users')
 		.select('*')
 		.eq('id', id)
 		.single();
@@ -61,12 +64,13 @@ async function getProfileById(id: number): Promise<Profile | null> {
 
 async function addProfile(firstname: string, email: string, occupation: string, goalId: number, emailFrequnecyId: number, authUserId: string): Promise<Profile | null> {
 	const { data, error } = await supabaseClient
-		.from('profiles')
+		.from('users')
 		.insert([
 			{
-				firstname,
+				// Use the auth user's id so this row is linked to auth.users
+				id: authUserId,
+				first_name: firstname,
 				email,
-				occupation,
 				goal_id: goalId,
 				email_frequency_id: emailFrequnecyId,
 			},
@@ -82,7 +86,7 @@ async function addProfile(firstname: string, email: string, occupation: string, 
 
 async function deleteProfileById(id: number): Promise<void> {
 	const { error } = await supabaseClient
-		.from('profiles')
+		.from('users')
 		.delete()
 		.eq('id', id);
 
@@ -161,7 +165,7 @@ async function getEmailFrequencyById(id: number): Promise<EmailFrequency | null>
 }
 
 // Journal Entries
-async function getJournalEntriesByUserId(userId: number): Promise<JournalEntry[]> {
+async function getJournalEntriesByUserId(userId: string): Promise<JournalEntry[]> {
 	const { data, error } = await supabaseClient
 		.from('journal_entries')
 		.select('*')
@@ -174,7 +178,7 @@ async function getJournalEntriesByUserId(userId: number): Promise<JournalEntry[]
 	return data!;
 }
 
-async function addJournalEntry(userId: number, content: string): Promise<JournalEntry | null> {
+async function addJournalEntry(userId: string, content: string): Promise<JournalEntry | null> {
 	const { data, error } = await supabaseClient
 		.from('journal_entries')
 		.insert([
