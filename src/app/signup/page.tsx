@@ -103,7 +103,7 @@ export default function FullPageForm() {
                 emailFrequency,
             };
 
-            await fetch("/api/signup", {
+            const res = await fetch("/api/signup", {
                 method: "POST",
                 body: JSON.stringify(payload),
                 headers: {
@@ -111,7 +111,10 @@ export default function FullPageForm() {
                 },
             });
 
-            await router.push('/journal');
+            if (res.ok) {
+                return router.push('/journal');
+
+            }
         } finally {
             setLoading(false);
         }
